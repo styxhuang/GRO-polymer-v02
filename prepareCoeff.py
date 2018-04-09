@@ -27,6 +27,7 @@ def PrepareFile(fileName, resName, outputName):
     file = parmed.load_file('out.top', xyz='out.crd')
     file.save('{}.gro'.format(outputName))
     file.save('{}.top'.format(outputName))
+    
     #If everything goes right, can delete all the unrelevent files in this step, 
     #and just keep gro & top files
     
