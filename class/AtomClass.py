@@ -61,5 +61,5 @@ class AtomsInfo(object):
         posX = '{:.3f}'.format(float(self.__pos__[0]))
         posY = '{:.3f}'.format(float(self.__pos__[1]))
         posZ = '{:.3f}'.format(float(self.__pos__[2]))
-        str1 = '{:>8}{:>7}{:>8}{:>8}{:>8}{:>8}'.format(mol, self.__atomName__, self.__globalIndex__, posX, posY, posZ)
+        str1 = '{:>7}{:>7}{:>5}{:>8}{:>8}{:>8}'.format(mol, self.__atomName__, self.__globalIndex__, posX, posY, posZ)
         return str1

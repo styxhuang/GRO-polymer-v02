@@ -78,10 +78,10 @@ def TopInfoExport(top):
     df = df.append(top.getDihedrals())
     
     f = open('tst.top','w')
-    f.write(str1)
     for i in range(len(df)):
         line = str(df.iloc[i][0]) + '\n'
         f.write(line)
+    f.write(str1)
     f.close()
     
 

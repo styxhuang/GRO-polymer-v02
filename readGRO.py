@@ -32,7 +32,13 @@ def AtomInfoInput(atom, line):
     molName = str1[1]
     atomName = line[1]
     atomIndex = line[2]
-    atomPos = [round(float(line[3]), 3), round(float(line[4]), 3), round(float(line[5]), 3)]
+    if len(atomName) > 3:
+        idx = len(line[1])-5
+        atomName = line[1][:idx]
+        atomIndex = line[1][-5:]
+        atomPos = [round(float(line[2]), 3), round(float(line[3]), 3), round(float(line[4]), 3)]
+    else:
+        atomPos = [round(float(line[3]), 3), round(float(line[4]), 3), round(float(line[5]), 3)]
     atom.setmolNum(molNum)   
     atom.setmolName(molName)
     atom.setatomName(atomName)
