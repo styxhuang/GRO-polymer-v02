@@ -143,7 +143,7 @@ def ExportGRO(info, outputName, molList): #info includes system info, name, atom
     f.write(molSize)
     f.close()
     
-fileName = 'system.gro'
-outputName = 'tst.gro'
-a = ReadGro(fileName)
-ExportGRO(a[0], outputName, a[2])
+#fileName = 'system.gro'
+#outputName = 'tst.gro'
+#a = ReadGro(fileName)
+#ExportGRO(a[0], outputName, a[2])

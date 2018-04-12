@@ -67,6 +67,9 @@ class TopInfo(object):
     def getDihedrals(self):
         return self.__dihedrals__
     
+    def updateTop(self, index):
+        pass
+        
     def appendAtomTypes(self, df):
         ori_types = self.getAtomTypesList(self.__atomTypes__)
         input_types = self.getAtomTypesList(df)
@@ -115,6 +118,41 @@ class TopInfo(object):
                     dihedrals[4], dihedrals[5], dihedrals[6], dihedrals[7])
         return tmp
     
+    def updateAtoms(self, idx):
+        df_ori = self.removeUselessLine('atoms', self.__atoms__)
+        tmp = df_ori[0].str.split()
+        for i in range (len(tmp)):
+            if int(tmp[i][0]) == idx:
+#                print(tmp[i])
+                tmp = tmp.drop(i).reset_index(drop=True)
+                self.refreshTop(idx)
+                
+    def refreshTop(self, idx):
+        atoms = self.getAtoms()
+#        bonds = getBonds()
+#        pairs = getPairs()
+#        angles = getAngles()
+#        dihedrals = getDihedrals()
+        self.refreshAtoms(idx, atoms)        
+
+    def refreshAtoms(self, idx, df):
+        df_1 = self.removeUselessLine('atoms', df)
+        tmp = df_1[0].str.split()
+        df_2 = pd.DataFrame(index=range(len(tmp)))
+        df.loc[:,0] = ''
+        i = 0
+        for atom in tmp:
+            if i >= idx:
+                atom[0] = int(atom[0]) - 1
+                atom[5] = int(atom[5]) - 1
+                atom = self.list2Str(atom = atom, Atom = True)
+                df.loc[i] = atom
+                i += 1
+        print('start!!!!!!!!!')
+        print(tmp) 
+        
+        self.setAtoms(tmp)
+ 
     def appendAtoms(self, df_new):
         df_ori = self.removeUselessLine('atoms', self.__atoms__)
         df_new = self.removeUselessLine('atoms', df_new)
@@ -134,6 +172,7 @@ class TopInfo(object):
 
         self.setAtoms(df_Tot)
         return init_idx
+    
     
     def appendBonds(self, init_idx, df):
         df_new = self.removeUselessLine('bonds', df)
@@ -219,7 +258,7 @@ class TopInfo(object):
         df_ori = self.__atoms__
         df = self.removeUselessLine('atoms', df_ori)
         for atom in df[0].str.split():
-            name.append(atom[1])
+            name.append(atom[4])
         return name
         
     def removeUselessLine(self, key, df):
