@@ -74,6 +74,6 @@ top_cro = getTop(fileName2)
 
 groInfo = readGRO.ReadGro(groFile) #basic gro info, atoms list, molecules list
 
-a = CombineTop(fileName1, fileName2, 'MON', 'CRO', groInfo[2])
+a = CombineTop(fileName1, fileName2, 'MON', 'CRO', groInfo[2]) #fileName1 is the file includes monomer's information
 
 readTop.TopInfoExport(a)
