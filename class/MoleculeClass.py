@@ -37,13 +37,13 @@ class MoleculeInfo(object):
 
     def delAtoms(self, index, rename):
         atoms = self.getAtoms()
-        print(len(atoms))
+#        print(len(atoms))
         del atoms[index]
-        print('atoms_new', len(atoms))
+#        print('atoms_new', len(atoms))
         self.__atoms__ = []
         i = 0
         for atom in atoms:
-            print('rename', rename)
+#            print('rename', rename)
             atom.setmolName(rename)
             atom.setlocalIndex(i)
             self.setAtoms(atom)

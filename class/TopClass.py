@@ -82,7 +82,7 @@ class TopInfo(object):
             df = self.removeUselessLine('atomtypes', df)
             for item in new_item:
                 content = df[df[0].str.contains(item)][0].iloc[0]
-                print(len(content))
+#                print(len(content))
                 append_item.append(content)
             
             i = 0
@@ -118,15 +118,30 @@ class TopInfo(object):
                     dihedrals[4], dihedrals[5], dihedrals[6], dihedrals[7])
         return tmp
     
-    def updateAtoms(self, idx):
-        df_ori = self.removeUselessLine('atoms', self.__atoms__)
+    def updateAtoms(self, idx): #one atom one times
+        df_ori = self.removeUselessLine('atoms', self.__atoms__)        
         tmp = df_ori[0].str.split()
-        for i in range (len(tmp)):
-            if int(tmp[i][0]) == idx:
+
+
+        i = 0
+        for atom in tmp:
+            if int(atom[0]) == idx:
 #                print(tmp[i])
-                tmp = tmp.drop(i).reset_index(drop=True)
-                self.refreshTop(idx)
-                
+                tmp = tmp.drop(tmp.index[i]).reset_index(drop=True)
+            i += 1
+            
+        i = 0
+#        print(tmp)
+        df = pd.DataFrame(index=range(len(tmp)))
+        df.loc[:,0] = ''
+        for atom in tmp: #transfer list to dataframe
+            atom = self.list2Str(atom = atom, Atom = True)
+            df.loc[i] = atom
+            i += 1
+            
+        self.setAtoms(df)
+        self.refreshTop(idx)
+
     def refreshTop(self, idx):
         atoms = self.getAtoms()
 #        bonds = getBonds()
@@ -136,22 +151,23 @@ class TopInfo(object):
         self.refreshAtoms(idx, atoms)        
 
     def refreshAtoms(self, idx, df):
-        df_1 = self.removeUselessLine('atoms', df)
-        tmp = df_1[0].str.split()
-        df_2 = pd.DataFrame(index=range(len(tmp)))
-        df.loc[:,0] = ''
+        index = idx - 1 #index for data frame
+        tmp = df[0].str.split()
+        df_new = pd.DataFrame(index=range(len(tmp)))
+        df_new.loc[:,0] = ''
         i = 0
         for atom in tmp:
-            if i >= idx:
+#            print('i: ', i)
+#            print('i+index: ', i+index)
+            if i >= index:
                 atom[0] = int(atom[0]) - 1
                 atom[5] = int(atom[5]) - 1
                 atom = self.list2Str(atom = atom, Atom = True)
-                df.loc[i] = atom
-                i += 1
-        print('start!!!!!!!!!')
-        print(tmp) 
+                df_new.loc[i] = atom
+#                print(atom)
+            i += 1
+        self.setAtoms(df_new)
         
-        self.setAtoms(tmp)
  
     def appendAtoms(self, df_new):
         df_ori = self.removeUselessLine('atoms', self.__atoms__)
@@ -263,6 +279,7 @@ class TopInfo(object):
         
     def removeUselessLine(self, key, df):
         df_ori = df
+        print(df_ori)
         df_new = df_ori[df_ori[0].str[0] != ';']
         df_new = df_new[df_new[0].str.contains(key) == False].reset_index(drop=True)
         return df_new

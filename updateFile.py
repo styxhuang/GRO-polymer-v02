@@ -29,6 +29,7 @@ def getTop(fileName):
 def UpdateTop(idx):
     top = getTop('MON.top')
     top.updateAtoms(idx+1) #because the top index starts from 1
+    return top
 
 def AppendTopInfo(topInfo, top):
     atomtypes = topInfo.getAtomTypes()
@@ -63,11 +64,12 @@ def CmpList(list1, list2): #list1 is the ori, list2 after deleted
         
 def CombineTop(monTop, croTop, monName, croName, morName, crorName, molList): #This function will return a sum top class, then use readTop.TopInfoExport(top) to write the top file
     top = Top.TopInfo()
-    
+#    molList[0].outputInfo()
+    print(molList[0].getName())
     for i in range (len(molList)):
         mol = molList[i]
         name = mol.getName()
-#        print('name', name)
+        print('name', name)
 #        print('morName: ', morName)
         if name == monName:
             if len(top.getAtoms()) == 0:
@@ -80,6 +82,7 @@ def CombineTop(monTop, croTop, monName, croName, morName, crorName, molList): #T
                 top = getTop(croTop)
             else:
                 cro_top = getTop(croTop)
+                print(type(cro_top))
                 top = AppendTopInfo(cro_top, top)   
         elif name == morName:
             top_st = getTop(monTop)
@@ -88,10 +91,12 @@ def CombineTop(monTop, croTop, monName, croName, morName, crorName, molList): #T
 #            print(name_st)
 #            print(name)
             a = CmpList(name_st, name) #Can get all deleted atoms index in the ori top files
-            print('a: ', a)
+#            print('a: ', a)
             for i in range (len(a)):
-                print(name_st[a[i]])
-                UpdateTop(a[0])
+#                print(name_st[a[i]])
+                mon_rxt_top = UpdateTop(a[0])
+#                print(mon_rxt_top.getAtomTypes())
+                top = AppendTopInfo(mon_rxt_top, top)
     return top
 
 def DelAtomGRO(atom_idx, rename, atomList, molList): #Get del atom index and update gro file
@@ -103,7 +108,8 @@ def DelAtomGRO(atom_idx, rename, atomList, molList): #Get del atom index and upd
             idx_local = atom.getlocalIndex()
         
     molList[molNum - 1].delAtoms(idx_local, rename)
-    molList[molNum - 1].outputInfo()
+    molList[molNum - 1].setName(rename)
+#    molList[molNum - 1].outputInfo()
     
     readGRO.ExportGRO(['','',''], 'tsttst.gro', molList)
     return molList
@@ -113,15 +119,16 @@ fileName2 = 'CRO.top'
 mon_react = 'MOR'
 cro_react = 'COR'
 
-groFile = 'tsttst.gro'
+groFile = 'system.gro'
 
 top_mon = getTop(fileName1)
 #top_cro = getTop(fileName2)
 
 groInfo = readGRO.ReadGro(groFile) #basic gro info, atoms list, molecules list
 
-a = CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', groInfo[2]) #fileName1 is the file includes monomer's information
+molList_new = DelAtomGRO(22, 'MOR', groInfo[1], groInfo[2])
+#molList_new[0].outputInfo()
+a = CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', molList_new) #fileName1 is the file includes monomer's information
 
-#readTop.TopInfoExport(a)
+readTop.TopInfoExport(a)
 
-#a = DelAtomGRO(22, 'MOR', groInfo[1], groInfo[2])
