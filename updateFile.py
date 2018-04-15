@@ -26,9 +26,24 @@ def getTop(fileName):
     top = readTop.TopInfoInput(topInfo, top)
     return top #return a top class
 
-def UpdateTop(idx):
-    top = getTop('MON.top')
-    top.updateAtoms(idx+1) #because the top index starts from 1
+def getRxnTop(resName1, resName2, fileName, mol): #resName1: bf rxn, resName2: af rxn
+    top = Top.TopInfo()
+    top_ori = getTop(fileName)
+    name_st = top_ori.getAtomsName()
+    name = mol.getAtomsName()
+    a = CmpList(name_st, name) #Can get all deleted atoms index in the ori top files
+    
+    top = top_ori
+    for i in range (len(a)):
+        top = UpdateTop(a[0], top)
+    return top
+
+def UpdateTop(idx, top):
+    top.updateAtoms(idx + 1) #because the top index starts from 1
+    top.updateBonds(idx + 1)
+    top.updatePairs(idx + 1)
+    top.updateAngles(idx + 1)
+    top.updateDihedrals(idx + 1)
     return top
 
 def AppendTopInfo(topInfo, top):
@@ -51,6 +66,7 @@ def CmpList(list1, list2): #list1 is the ori, list2 after deleted
     idx = []
     tmp = 0
     i = 0
+    
     while ((i - tmp) < len(list2)):
 #        print('i', i)
 #        print('list1[i]', list1[i])
@@ -62,7 +78,7 @@ def CmpList(list1, list2): #list1 is the ori, list2 after deleted
         i += 1
     return idx
         
-def CombineTop(monTop, croTop, monName, croName, morName, crorName, molList): #This function will return a sum top class, then use readTop.TopInfoExport(top) to write the top file
+def CombineTop(monTop, croTop, monName, croName, morName, corName, molList): #This function will return a sum top class, then use readTop.TopInfoExport(top) to write the top file
     top = Top.TopInfo()
 #    molList[0].outputInfo()
     print(molList[0].getName())
@@ -82,20 +98,18 @@ def CombineTop(monTop, croTop, monName, croName, morName, crorName, molList): #T
                 top = getTop(croTop)
             else:
                 cro_top = getTop(croTop)
-                print(type(cro_top))
                 top = AppendTopInfo(cro_top, top)   
         elif name == morName:
-            top_st = getTop(monTop)
-            name_st = top_st.getAtomsName()
-            name = mol.getAtomsName()
-#            print(name_st)
-#            print(name)
-            a = CmpList(name_st, name) #Can get all deleted atoms index in the ori top files
-#            print('a: ', a)
-            for i in range (len(a)):
-#                print(name_st[a[i]])
-                mon_rxt_top = UpdateTop(a[0])
-#                print(mon_rxt_top.getAtomTypes())
+            if len(top.getAtoms()) == 0:
+                top = getRxnTop(monName, morName, monTop, mol)
+            else:
+                mon_rxt_top = getRxnTop(monName, morName, monTop, mol)
+                top = AppendTopInfo(mon_rxt_top, top)
+        elif name == corName:
+            if len(top.getAtoms()) == 0:
+                top = getRxnTop(croName, corName, croTop, mol)
+            else:
+                mon_rxt_top = getRxnTop(croName, corName, croTop, mol)
                 top = AppendTopInfo(mon_rxt_top, top)
     return top
 
@@ -111,7 +125,7 @@ def DelAtomGRO(atom_idx, rename, atomList, molList): #Get del atom index and upd
     molList[molNum - 1].setName(rename)
 #    molList[molNum - 1].outputInfo()
     
-    readGRO.ExportGRO(['','',''], 'tsttst.gro', molList)
+    readGRO.ExportGRO(['','',''], 'tst-big.gro', molList)
     return molList
 
 fileName1 = 'MON.top'
@@ -119,16 +133,18 @@ fileName2 = 'CRO.top'
 mon_react = 'MOR'
 cro_react = 'COR'
 
-groFile = 'system.gro'
+groFile = 'system-big.gro'
 
 top_mon = getTop(fileName1)
 #top_cro = getTop(fileName2)
 
 groInfo = readGRO.ReadGro(groFile) #basic gro info, atoms list, molecules list
 
-molList_new = DelAtomGRO(22, 'MOR', groInfo[1], groInfo[2])
-#molList_new[0].outputInfo()
-a = CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', molList_new) #fileName1 is the file includes monomer's information
+molList_new = DelAtomGRO(5, 'MOR', groInfo[1], groInfo[2])
+molList_new = DelAtomGRO(55, 'MOR', groInfo[1], groInfo[2])
+
+a = CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', groInfo[2]) #fileName1 is the file includes monomer's information
+
 
 readTop.TopInfoExport(a)
 

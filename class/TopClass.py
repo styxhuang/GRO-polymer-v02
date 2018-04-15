@@ -6,6 +6,7 @@ Created on Sun Apr  8 13:17:58 2018
 """
 
 import pandas as pd
+import sys
 
 class TopInfo(object):
     def __init__(self):
@@ -117,38 +118,44 @@ class TopInfo(object):
                     dihedrals[0], dihedrals[1], dihedrals[2], dihedrals[3], 
                     dihedrals[4], dihedrals[5], dihedrals[6], dihedrals[7])
         return tmp
+    def list2DF(self, lst, Atom=False, Bond = False, Pairs = False, Angles = False, Dihedrals = False):
+        i = 0
+        df = pd.DataFrame(index=range(len(lst)))
+        df.loc[:,0] = ''
+        for item in lst: #transfer list to dataframe
+            if Atom:
+                item = self.list2Str(atom = item, Atom = True)
+            elif Bond:
+                item = self.list2Str(bond = item, Bond = True)
+            elif Pairs:
+                item = self.list2Str(pairs = item, Pairs = True)
+            elif Angles:
+                item = self.list2Str(angles = item, Angles = True)
+            elif Dihedrals:
+                item = self.list2Str(dihedrals = item, Dihedrals = True)
+                
+            df.loc[i] = item
+            i += 1
     
+        return df
+    def shiftIndex(self, content, df):
+        df.loc[-1] = content
+        df.index = df.index + 1
+        df.sort_index(inplace=True)
+    
+        return df
+        
     def updateAtoms(self, idx): #one atom one times
-        df_ori = self.removeUselessLine('atoms', self.__atoms__)        
+        df_ori = self.removeUselessLine('atoms', self.__atoms__)  
         tmp = df_ori[0].str.split()
-
-
         i = 0
         for atom in tmp:
             if int(atom[0]) == idx:
-#                print(tmp[i])
                 tmp = tmp.drop(tmp.index[i]).reset_index(drop=True)
             i += 1
-            
-        i = 0
-#        print(tmp)
-        df = pd.DataFrame(index=range(len(tmp)))
-        df.loc[:,0] = ''
-        for atom in tmp: #transfer list to dataframe
-            atom = self.list2Str(atom = atom, Atom = True)
-            df.loc[i] = atom
-            i += 1
-            
-        self.setAtoms(df)
-        self.refreshTop(idx)
-
-    def refreshTop(self, idx):
-        atoms = self.getAtoms()
-#        bonds = getBonds()
-#        pairs = getPairs()
-#        angles = getAngles()
-#        dihedrals = getDihedrals()
-        self.refreshAtoms(idx, atoms)        
+        df = self.list2DF(tmp, Atom=True)
+        
+        self.refreshAtoms(idx, df)  
 
     def refreshAtoms(self, idx, df):
         index = idx - 1 #index for data frame
@@ -157,15 +164,21 @@ class TopInfo(object):
         df_new.loc[:,0] = ''
         i = 0
         for atom in tmp:
-#            print('i: ', i)
-#            print('i+index: ', i+index)
+#            print('atom: ', atom)
             if i >= index:
                 atom[0] = int(atom[0]) - 1
                 atom[5] = int(atom[5]) - 1
                 atom = self.list2Str(atom = atom, Atom = True)
                 df_new.loc[i] = atom
-#                print(atom)
+            else:
+                atom = self.list2Str(atom = atom, Atom = True)
+                df_new.loc[i] = atom
             i += 1
+            
+        str1 = '\n[ atoms ]'
+        str2 = ';   nr       type  resnr residue  atom   cgnr    charge       mass  typeB    chargeB      massB'
+        df = self.shiftIndex(str2, df_new)
+        df = self.shiftIndex(str1, df_new)   
         self.setAtoms(df_new)
         
  
@@ -188,8 +201,101 @@ class TopInfo(object):
 
         self.setAtoms(df_Tot)
         return init_idx
+
+    def updateBonds(self, idx): #Two steps, first del bonds, second update atom idx to current
+        df_ori = self.removeUselessLine('bonds', self.__bonds__)  
+        tmp = self.updateCoeff(idx, df_ori, Bond=True)
+        for index, row in tmp.iteritems():
+            if (len(row) == 5):
+                if int(int(row[0]) - idx) > 0:
+                    row[0] = str(int(row[0]) - 1)
+                    if int(int(row[1]) - idx) > 0:
+                        row[1] = str(int(row[1]) - 1)
+                elif int(int(row[1]) - idx) > 0:
+                    row[1] = str(int(row[1]) - 1)
+                    
+        df = self.list2DF(tmp, Bond=True)
+        str1 = '\n[ bonds ]'
+        str2 = ';    ai     aj funct         c0         c1         c2         c3'
+        df = self.shiftIndex(str2, df)
+        df = self.shiftIndex(str1, df)   
+
+        self.setBonds(df)
     
-    
+    def updatePairs(self, idx):
+        df_ori = self.removeUselessLine('pairs', self.__pairs__)  
+        tmp = self.updateCoeff(idx, df_ori, Bond=True)
+        for index, row in tmp.iteritems():
+            if (len(row) == 3):
+                if int(int(row[0]) - idx) > 0:
+                    row[0] = str(int(row[0]) - 1)
+                    if int(int(row[1]) - idx) > 0:
+                        row[1] = str(int(row[1]) - 1)
+                elif int(int(row[1]) - idx) > 0:
+                    row[1] = str(int(row[1]) - 1)
+                    
+        df = self.list2DF(tmp, Pairs=True)
+        str1 = '\n[ pairs ]'
+        str2 = ';    ai     aj funct         c0         c1         c2         c3'
+        df = self.shiftIndex(str2, df)
+        df = self.shiftIndex(str1, df)   
+
+        self.setPairs(df)
+        
+    def updateAngles(self, idx):
+        df_ori = self.removeUselessLine('angles', self.__angles__)  
+        tmp = self.updateCoeff(idx, df_ori, Angles=True)
+        for index, row in tmp.iteritems():
+            if (len(row) == 6):
+                for i in range (3):
+                    if (int(row[i]) - idx) > 0:
+                        row[i] = str(int(row[i]) - 1)   
+                    
+        df = self.list2DF(tmp, Angles=True)
+        str1 = '\n[ angles ]'
+        str2 = ';    ai     aj funct         c0         c1         c2         c3'
+        df = self.shiftIndex(str2, df)
+        df = self.shiftIndex(str1, df)   
+
+        self.setAngles(df)     
+        
+    def updateDihedrals(self, idx):
+        df_ori = self.removeUselessLine('dihedrals', self.__dihedrals__)  
+        tmp = self.updateCoeff(idx, df_ori, Dihedrals=True)
+        for index, row in tmp.iteritems():
+            if (len(row) == 8):
+                for i in range (4):
+                    if (int(row[i]) - idx) > 0:
+                        row[i] = str(int(row[i]) - 1)   
+                    
+        df = self.list2DF(tmp, Dihedrals=True)
+        str1 = '\n[ dihedrals ]'
+        str2 = ';    ai     aj     ak     al funct         c0         c1         c2         c3         c4         c5'
+        df = self.shiftIndex(str2, df)
+        df = self.shiftIndex(str1, df)   
+
+        self.setDihedrals(df) 
+        
+    def updateCoeff(self, idx, info, Bond = False, Pairs = False, Angles = False, Dihedrals = False):
+        #get info after delete relative atoms from different sections
+        tmp = info[0].str.split()
+        for index, row in tmp.iteritems():
+            if Bond:
+                if row[0] == str(idx) or row[1] == str(idx):
+                    tmp.drop(index, inplace=True)
+            elif Pairs:
+                if row[0] == str(idx) or row[1] == str(idx):
+                    tmp.drop(index, inplace=True)
+            elif Angles:
+                if row[0] == str(idx) or row[1] == str(idx) or row[2] == str(idx):
+                    tmp.drop(index, inplace=True)
+            elif Dihedrals:
+                if row[0] == str(idx) or row[1] == str(idx) or row[2] == str(idx) or row[3] == str(idx):
+                    tmp.drop(index, inplace=True)      
+                    
+        tmp.reset_index(drop=True, inplace=True)
+        return tmp
+        
     def appendBonds(self, init_idx, df):
         df_new = self.removeUselessLine('bonds', df)
         tmp = df_new[0].str.split()    
@@ -279,7 +385,6 @@ class TopInfo(object):
         
     def removeUselessLine(self, key, df):
         df_ori = df
-        print(df_ori)
         df_new = df_ori[df_ori[0].str[0] != ';']
         df_new = df_new[df_new[0].str.contains(key) == False].reset_index(drop=True)
         return df_new
