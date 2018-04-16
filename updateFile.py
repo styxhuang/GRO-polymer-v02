@@ -133,7 +133,7 @@ fileName2 = 'CRO.top'
 mon_react = 'MOR'
 cro_react = 'COR'
 
-groFile = 'system-big.gro'
+groFile = 'system.gro'
 
 top_mon = getTop(fileName1)
 #top_cro = getTop(fileName2)
