@@ -114,37 +114,37 @@ def CombineTop(monTop, croTop, monName, croName, morName, corName, molList): #Th
     return top
 
 def DelAtomGRO(atom_idx, rename, atomList, molList): #Get del atom index and update gro file
-        
+#    atom_idx -= 1
     for atom in atomList:
         idx = atom.getglobalIndex()
         if idx == atom_idx:
             molNum = int(atom.getmolNum())
             idx_local = atom.getlocalIndex()
-        
+            atomList.remove(atom)
     molList[molNum - 1].delAtoms(idx_local, rename)
     molList[molNum - 1].setName(rename)
 #    molList[molNum - 1].outputInfo()
     
-    readGRO.ExportGRO(['','',''], 'tst-big.gro', molList)
-    return molList
+    readGRO.ExportGRO(['','',''], 'tst.gro', molList)
+    return atomList, molList
 
-fileName1 = 'MON.top'
-fileName2 = 'CRO.top'
-mon_react = 'MOR'
-cro_react = 'COR'
-
-groFile = 'system.gro'
-
-top_mon = getTop(fileName1)
-#top_cro = getTop(fileName2)
-
-groInfo = readGRO.ReadGro(groFile) #basic gro info, atoms list, molecules list
-
-molList_new = DelAtomGRO(5, 'MOR', groInfo[1], groInfo[2])
-molList_new = DelAtomGRO(55, 'MOR', groInfo[1], groInfo[2])
-
-a = CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', groInfo[2]) #fileName1 is the file includes monomer's information
-
-
-readTop.TopInfoExport(a)
+#fileName1 = 'MON.top'
+#fileName2 = 'CRO.top'
+#mon_react = 'MOR'
+#cro_react = 'COR'
+#
+#groFile = 'system.gro'
+#
+#top_mon = getTop(fileName1)
+##top_cro = getTop(fileName2)
+#
+#groInfo = readGRO.ReadGro(groFile) #basic gro info, atoms list, molecules list
+#
+#molList_new = DelAtomGRO(5, 'MOR', groInfo[1], groInfo[2])
+#molList_new = DelAtomGRO(55, 'MOR', groInfo[1], groInfo[2])
+#
+#a = CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', groInfo[2]) #fileName1 is the file includes monomer's information
+#
+#
+#readTop.TopInfoExport(a)
 
