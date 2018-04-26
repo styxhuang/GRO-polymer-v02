@@ -86,11 +86,11 @@ def TopInfoExport(top):
     
 
 
-fileName = 'MON.top'
-topInfo = ReadTop(fileName)
-
-top = Top.TopInfo()
-top1 = TopInfoInput(topInfo, top)
-#TopInfoExport(top1)
-
-a = topInfo[2]
+#fileName = 'MON.top'
+#topInfo = ReadTop(fileName)
+#
+#top = Top.TopInfo()
+#top1 = TopInfoInput(topInfo, top)
+##TopInfoExport(top1)
+#
+#a = topInfo[2]
