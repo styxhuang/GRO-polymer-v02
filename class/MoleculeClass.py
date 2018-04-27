@@ -31,8 +31,11 @@ class MoleculeInfo(object):
     
     def getAtomsName(self):
         name = []
+        string = ['C','N','O','H']
         for atom in self.__atoms__:
-            name.append(atom.getatomName())
+            tmp = atom.getatomName()
+            str1 = [char for char in tmp if char in string][0]
+            name.append(str1)
         return name
 
     def delAtoms(self, index, rename):

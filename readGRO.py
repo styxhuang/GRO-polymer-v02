@@ -94,6 +94,16 @@ def Atom2Mol(atomsList):
         i += info[0]
     return molList
 
+def MonOrCro(molList):
+    monList = []
+    croList = []
+    for mol in molList:
+        if 'N' in mol.getAtomsName():
+            croList.append(mol)
+        else:
+            monList.append(mol)
+    return monList, croList
+
 def ReadGro(fileName): #Return the system's info, list of atoms and molecules
     df = pd.read_csv(fileName, header=None, sep='\n', skip_blank_lines=False)
     baseList = df.iloc[2:-1].reset_index(drop=True)[0].str.split()
@@ -104,8 +114,8 @@ def ReadGro(fileName): #Return the system's info, list of atoms and molecules
     
     atomsList = SplitAtom(baseList)
     molList = Atom2Mol(atomsList)
-
-    return info, atomsList, molList
+    [monList, croList] = MonOrCro(molList)
+    return info, atomsList, molList, monList, croList
 
 def CountAtoms(molList):
     num = 0

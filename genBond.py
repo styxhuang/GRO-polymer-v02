@@ -13,6 +13,7 @@ When generate bonds:
 """
 import pandas as pd
 import sys
+import numpy as np
 
 import readGRO
 import readTop
@@ -93,15 +94,6 @@ def list2DF(lst, Bond = False, Pairs = False, Angles = False, Dihedrals = False)
 
     return df
 
-def findHydrogen():
-    pass
-
-def delHydrogen():
-    pass
-
-def findBondsAtoms():
-    pass
-
 def updateTopBonds(idx1, idx2, atomList, ori_top):
     idx1_in = idx1 - 1
     idx2_in = idx2 - 1
@@ -144,9 +136,6 @@ def appendPairs(top, str1):
     df = df.append(str1, ignore_index=True)
     top.setPairs(df)
     return top
-    
-def findAngleAtoms():
-    pass
 
 def updateTopAngles(idx1, idx2, idx3, atomList, ori_top):
     idx1_in = idx1 - 1
@@ -221,62 +210,124 @@ def appendDihedrals(top, str1):
     
     return top
 
+def calDist(aPos, bPos):
+    x2 = np.power(float(aPos[0])-float(bPos[0]),2)
+    y2 = np.power(float(aPos[1])-float(bPos[1]),2)
+    z2 = np.power(float(aPos[2])-float(bPos[2]),2)
+    dist = np.sqrt(x2+y2+z2)
+    return dist
+
+def findHydrogen():
+    pass
+
+def delHydrogen():
+    pass
+
+def findBondsAtoms():
+    pass
+    
+def findAngleAtoms():
+    pass
+
 def findDihedralAtoms():
     pass
 
+def getMolAtoms(mol, idx):
+    atoms = []
+    for i in idx:
+        atom = mol.getAtoms()
+        atoms.append(atom[i-1])
+    
+    return atoms
 
+def flatten(inList):
+    new_list = []
+    for i in inList:
+        for j in i:
+            new_list.append(j)
+    return new_list
 
-#TODO: the coefficient seems not right, when running nvt simulation, always met linc error
+def getReactAtoms(monR_idx, croR_idx, monList, croList):
+    monAtoms = []
+    croAtoms = []
+    for mol in monList:
+        atom = getMolAtoms(mol, monR_idx)
+        monAtoms.append(atom)
+    
+    for mol in croList:
+        atom = getMolAtoms(mol, croR_idx)
+        croAtoms.append(atom)
+    
+    monAtoms=flatten(monAtoms)
+    croAtoms=flatten(croAtoms)
+    return monAtoms, croAtoms
+
+def crosslink(monList, croList, molList, monR_idx, croR_idx):
+    pair = []
+    monRAtoms = getReactAtoms(monR_idx, croR_idx, monList, croList)[0]
+    croRAtoms = getReactAtoms(monR_idx, croR_idx, monList, croList)[1]
+    for atom1 in croRAtoms:
+        idx1 = atom1.getglobalIndex()
+        print('idx1', idx1)
+        for atom2 in monRAtoms:
+            idx2 = atom2.getglobalIndex()
+            pair.append([idx1, idx2])
+    return pair
+
 fileName1 = 'MON.top'
 fileName2 = 'CRO.top'
 mon_react = 'MOR'
 cro_react = 'COR'
 groFile = 'system.gro'
-
+#add connective to the atom
 groInfo = readGRO.ReadGro(groFile) #info, atomsList, molList
 atomList = groInfo[1]
 molList = groInfo[2]
-monR_list = [1,47] #local index
+monList = groInfo[3]
+croList = groInfo[4]
+monR_list = [1,46] #local index
 monRH_list = [3,48]
-croR_list = [1, 38]
+croR_list = [1, 37]
 croRH_list = [4, 40]
-
-listInfo = updateFile.DelAtomGRO(3, 'MOR', atomList, molList)
-listInfo = updateFile.DelAtomGRO(56, 'COR', listInfo[0], listInfo[1])
-new_TOP = updateFile.CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', listInfo[1])
-a = updateTopBonds(1, 53, atomList, new_TOP)
-
-a = updateTopPairs(3, 54, new_TOP)
-a = updateTopPairs(4, 54, new_TOP)
-a = updateTopPairs(2, 54, new_TOP)
-a = updateTopPairs(2, 55, new_TOP)
-a = updateTopPairs(3, 55, new_TOP)
-a = updateTopPairs(4, 55, new_TOP)
-a = updateTopPairs(5, 53, new_TOP)
-a = updateTopPairs(7, 53, new_TOP)
-a = updateTopPairs(8, 53, new_TOP)
-a = updateTopPairs(1, 64, new_TOP)
-a = updateTopPairs(1, 56, new_TOP)
-a = updateTopPairs(1, 69, new_TOP)
-
-a = updateTopAngles(4, 1, 53, atomList, a)
-a = updateTopAngles(3, 1, 53, atomList, a)
-a = updateTopAngles(55, 53, 1, atomList, a)
-a = updateTopAngles(2, 1, 53, atomList, a)
-a = updateTopAngles(1, 53, 54, atomList, a)
+pair = crosslink(monList, croList, molList, monR_list, croR_list)
 #
-#a = updateTopDihedrals(54, 53, 1, 2, atomList, a) #angle section seems fine, but dih has extreme different
-a = updateTopDihedrals(3, 1, 53, 54, atomList, a)
-a = updateTopDihedrals(4, 1, 53, 54, atomList, a)
-a = updateTopDihedrals(2, 1, 53, 54, atomList, a)
-a = updateTopDihedrals(2, 1, 53, 55, atomList, a)
-a = updateTopDihedrals(3, 1, 53, 55, atomList, a)
-a = updateTopDihedrals(4, 1, 53, 55, atomList, a)
-a = updateTopDihedrals(5, 2, 1, 53, atomList, a)
-a = updateTopDihedrals(7, 2, 1, 53, atomList, a)
-a = updateTopDihedrals(8, 2, 1, 53, atomList, a)
-a = updateTopDihedrals(1, 53, 54, 64, atomList, a)
-a = updateTopDihedrals(1, 53, 54, 56, atomList, a)
-a = updateTopDihedrals(1, 53, 54, 69, atomList, a)
+#listInfo = updateFile.DelAtomGRO(3, 'MOR', atomList, molList)
+#listInfo = updateFile.DelAtomGRO(56, 'COR', listInfo[0], listInfo[1])
+#new_TOP = updateFile.CombineTop(fileName1, fileName2, 'MON', 'CRO', 'MOR', 'COR', listInfo[1])
 
-readTop.TopInfoExport(a)
+#a = updateTopBonds(1, 53, atomList, new_TOP)
+#
+#a = updateTopPairs(3, 54, new_TOP)
+#a = updateTopPairs(4, 54, new_TOP)
+#a = updateTopPairs(2, 54, new_TOP)
+#a = updateTopPairs(2, 55, new_TOP)
+#a = updateTopPairs(3, 55, new_TOP)
+#a = updateTopPairs(4, 55, new_TOP)
+#a = updateTopPairs(5, 53, new_TOP)
+#a = updateTopPairs(7, 53, new_TOP)
+#a = updateTopPairs(8, 53, new_TOP)
+#a = updateTopPairs(1, 64, new_TOP)
+#a = updateTopPairs(1, 56, new_TOP)
+#a = updateTopPairs(1, 69, new_TOP)
+#
+#a = updateTopAngles(4, 1, 53, atomList, a)
+#a = updateTopAngles(3, 1, 53, atomList, a)
+#a = updateTopAngles(55, 53, 1, atomList, a)
+#a = updateTopAngles(2, 1, 53, atomList, a)
+#a = updateTopAngles(1, 53, 54, atomList, a)
+##
+##a = updateTopDihedrals(54, 53, 1, 2, atomList, a) #angle section seems fine, but dih has extreme different
+#a = updateTopDihedrals(3, 1, 53, 54, atomList, a)
+#a = updateTopDihedrals(4, 1, 53, 54, atomList, a)
+#a = updateTopDihedrals(2, 1, 53, 54, atomList, a)
+#a = updateTopDihedrals(2, 1, 53, 55, atomList, a)
+#a = updateTopDihedrals(3, 1, 53, 55, atomList, a)
+#a = updateTopDihedrals(4, 1, 53, 55, atomList, a)
+#a = updateTopDihedrals(5, 2, 1, 53, atomList, a)
+#a = updateTopDihedrals(7, 2, 1, 53, atomList, a)
+#a = updateTopDihedrals(8, 2, 1, 53, atomList, a)
+#a = updateTopDihedrals(1, 53, 54, 64, atomList, a)
+#a = updateTopDihedrals(1, 53, 54, 56, atomList, a)
+#a = updateTopDihedrals(1, 53, 54, 69, atomList, a)
+#
+#readTop.TopInfoExport(a)
